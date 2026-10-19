@@ -1,0 +1,65 @@
+<div class="login-wrapper">
+  <div class="login-glow"></div>
+
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo-badge">🍽️</div>
+      <h2>GUSTO RESERVE</h2>
+      <p class="login-subtitle">Restaurant Administration Portal</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="input-group">
+        <label for="username">Username</label>
+        <div class="input-field-wrapper">
+          <span class="input-icon">👤</span>
+          <input
+            id="username"
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            placeholder="e.g. admin"
+          />
+        </div>
+        <div class="field-error" *ngIf="form.controls.username.touched && form.controls.username.errors">
+          <span *ngIf="form.controls.username.errors['required']">⚠️ Username is required</span>
+          <span *ngIf="form.controls.username.errors['minlength']">⚠️ At least 3 characters</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password</label>
+        <div class="input-field-wrapper">
+          <span class="input-icon">🔒</span>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+          />
+        </div>
+        <div class="field-error" *ngIf="form.controls.password.touched && form.controls.password.errors">
+          <span *ngIf="form.controls.password.errors['required']">⚠️ Password is required</span>
+          <span *ngIf="form.controls.password.errors['minlength']">⚠️ At least 6 characters</span>
+        </div>
+      </div>
+
+      <div class="demo-box" (click)="fillDemo()" title="Click to auto-fill default admin credentials">
+        <div class="demo-pill">💡 Demo Credentials</div>
+        <div class="demo-text">Click to fill: <strong>admin</strong> / <strong>admin123</strong></div>
+      </div>
+
+      <button class="btn btn-primary btn-submit" type="submit" [disabled]="loading">
+        <span *ngIf="!loading">Sign In to Dashboard →</span>
+        <span *ngIf="loading" class="spinner-container">
+          <span class="spinner"></span> Signing in...
+        </span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <span>🔒 MySQL Encrypted Session • Restaurant Reservation Manager</span>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,233 @@
+<div class="page-header">
+  <div>
+    <h2>Restaurant Tables & Floor Plan</h2>
+    <p class="page-subtitle">Configure dining zones, capacities, and table availability</p>
+  </div>
+  <div class="header-actions">
+    <div class="view-toggle">
+      <button
+        class="toggle-btn"
+        [class.active]="viewMode === 'table'"
+        (click)="setViewMode('table')"
+        title="Table List View"
+      >
+        📋 List
+      </button>
+      <button
+        class="toggle-btn"
+        [class.active]="viewMode === 'grid'"
+        (click)="setViewMode('grid')"
+        title="Floor Plan Grid View"
+      >
+        🪑 Floor Plan
+      </button>
+    </div>
+    <button class="btn btn-primary" (click)="openAdd()">
+      <span>+ Add Table</span>
+    </button>
+  </div>
+</div>
+
+<!-- Quick Stat Metrics -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon primary">🪑</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Tables</div>
+      <div class="stat-value">{{ tables.length }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon success">✅</div>
+    <div class="stat-content">
+      <div class="stat-label">Available</div>
+      <div class="stat-value">{{ getAvailableCount() }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon warning">🛠️</div>
+    <div class="stat-content">
+      <div class="stat-label">Maintenance</div>
+      <div class="stat-value">{{ getMaintenanceCount() }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon gold">👥</div>
+    <div class="stat-content">
+      <div class="stat-label">Seating Capacity</div>
+      <div class="stat-value">{{ getTotalCapacity() }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card filters">
+  <div>
+    <label>Location Area</label>
+    <select [(ngModel)]="filterLocation" (change)="loadTables()">
+      <option value="">All Dining Areas</option>
+      <option value="indoor">🏛️ Indoor Dining</option>
+      <option value="outdoor">🌿 Outdoor Patio</option>
+      <option value="private">🍷 Private Dining Suite</option>
+    </select>
+  </div>
+  <div>
+    <label>Table Status</label>
+    <select [(ngModel)]="filterStatus" (change)="loadTables()">
+      <option value="">All Statuses</option>
+      <option value="available">● Available</option>
+      <option value="maintenance">● Maintenance</option>
+    </select>
+  </div>
+  <div>
+    <label>Minimum Capacity</label>
+    <input type="number" min="1" [(ngModel)]="filterMinCapacity" (change)="loadTables()" placeholder="e.g. 4 guests" />
+  </div>
+  <button class="btn btn-light" (click)="clearFilters()">Reset Filters</button>
+</div>
+
+<!-- Add / Edit Form Card -->
+<div class="card form-card fade-in" *ngIf="showForm">
+  <div class="form-header">
+    <div class="form-title-badge">🪑</div>
+    <div>
+      <h3>{{ editingId === null ? 'Add New Table' : 'Edit Table #' + form.controls.table_number.value }}</h3>
+      <p class="form-subtitle">Specify dining zone, guest capacity and operational status</p>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate class="grid-form">
+    <div>
+      <label>Table Number</label>
+      <input type="number" formControlName="table_number" placeholder="e.g. 10" />
+      <div class="field-error" *ngIf="form.controls.table_number.touched && form.controls.table_number.errors">
+        <span *ngIf="form.controls.table_number.errors['required']">⚠️ Table number is required</span>
+        <span *ngIf="form.controls.table_number.errors['min']">⚠️ Must be 1 or greater</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Guest Capacity</label>
+      <input type="number" formControlName="capacity" placeholder="e.g. 4" />
+      <div class="field-error" *ngIf="form.controls.capacity.touched && form.controls.capacity.errors">
+        <span *ngIf="form.controls.capacity.errors['required']">⚠️ Capacity is required</span>
+        <span *ngIf="form.controls.capacity.errors['min']">⚠️ Minimum 1 guest</span>
+        <span *ngIf="form.controls.capacity.errors['max']">⚠️ Maximum 20 guests</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Zone / Location</label>
+      <select formControlName="location">
+        <option value="indoor">🏛️ Indoor Dining</option>
+        <option value="outdoor">🌿 Outdoor Patio</option>
+        <option value="private">🍷 Private Dining Suite</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Operational Status</label>
+      <select formControlName="status">
+        <option value="available">Available for Bookings</option>
+        <option value="maintenance">Under Maintenance</option>
+      </select>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">
+        {{ editingId === null ? 'Create Table' : 'Save Changes' }}
+      </button>
+      <button class="btn btn-light" type="button" (click)="cancelForm()">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<!-- Floor Plan Grid View -->
+<div class="card" *ngIf="viewMode === 'grid'">
+  <div class="tables-grid">
+    <div
+      *ngFor="let t of tables"
+      class="table-card"
+      [class.maintenance]="t.status === 'maintenance'"
+    >
+      <div class="table-card-header">
+        <div class="table-badge-number">
+          <span>Table {{ t.table_number }}</span>
+        </div>
+        <span class="badge" [class.badge-warn]="t.status === 'maintenance'">
+          {{ t.status | titlecase }}
+        </span>
+      </div>
+      <div class="table-card-body">
+        <div class="table-info-row">
+          <span>👥</span>
+          <strong>Capacity:</strong> {{ t.capacity }} Guests
+        </div>
+        <div class="table-info-row">
+          <span>{{ getLocationIcon(t.location) }}</span>
+          <strong>Zone:</strong> {{ t.location | titlecase }}
+        </div>
+      </div>
+      <div class="table-card-actions">
+        <button class="btn btn-small" (click)="openEdit(t)">✏️ Edit</button>
+        <button class="btn btn-small btn-danger" (click)="remove(t)">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table List View -->
+<div class="card" [style.display]="viewMode === 'table' ? 'block' : 'none'">
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading table registry...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && tables.length === 0">
+    <div class="empty-icon">🪑</div>
+    <h3>No Tables Found</h3>
+    <p>Try adjusting your search filters or click "Add Table" to create one.</p>
+  </div>
+
+  <table *ngIf="tables.length > 0">
+    <thead>
+      <tr>
+        <th>Table</th>
+        <th>Capacity</th>
+        <th>Dining Zone</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of tables">
+        <td>
+          <div class="table-cell-chip">
+            <span class="table-cell-icon">🍽️</span>
+            <strong>Table #{{ t.table_number }}</strong>
+          </div>
+        </td>
+        <td>
+          <div class="capacity-pill">
+            <span>👥</span>
+            <span>{{ t.capacity }} seats</span>
+          </div>
+        </td>
+        <td>
+          <span class="zone-tag">
+            {{ getLocationIcon(t.location) }} {{ t.location | titlecase }}
+          </span>
+        </td>
+        <td>
+          <span class="badge" [class.badge-warn]="t.status === 'maintenance'">
+            {{ t.status | titlecase }}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-small" (click)="openEdit(t)" title="Edit Table">Edit</button>
+          <button class="btn btn-small btn-danger" (click)="remove(t)" title="Delete Table">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

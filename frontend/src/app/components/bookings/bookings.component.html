@@ -1,0 +1,252 @@
+<div class="page-header">
+  <div>
+    <h2>Guest Reservations</h2>
+    <p class="page-subtitle">Track incoming dining reservations, table assignments and guest arrivals</p>
+  </div>
+  <button class="btn btn-primary" (click)="openAdd()">
+    <span>+ New Reservation</span>
+  </button>
+</div>
+
+<!-- Quick Stat Metrics -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon primary">📅</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Bookings</div>
+      <div class="stat-value">{{ bookings.length }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon success">✨</div>
+    <div class="stat-content">
+      <div class="stat-label">Confirmed</div>
+      <div class="stat-value">{{ getConfirmedCount() }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon warning">🕒</div>
+    <div class="stat-content">
+      <div class="stat-label">Today's Schedule</div>
+      <div class="stat-value">{{ getTodayCount() }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon gold">🥂</div>
+    <div class="stat-content">
+      <div class="stat-label">Expected Guests</div>
+      <div class="stat-value">{{ getTotalGuests() }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card filters">
+  <div>
+    <label>Reservation Date</label>
+    <input type="date" [(ngModel)]="filterDate" (change)="loadBookings()" />
+  </div>
+  <div>
+    <label>Status Filter</label>
+    <select [(ngModel)]="filterStatus" (change)="loadBookings()">
+      <option value="">All Statuses</option>
+      <option value="confirmed">● Confirmed</option>
+      <option value="completed">● Completed</option>
+      <option value="cancelled">● Cancelled</option>
+    </select>
+  </div>
+  <div class="search-field-container">
+    <label>Search Guest</label>
+    <div class="search-input-wrapper">
+      <input
+        type="text"
+        [(ngModel)]="filterSearch"
+        (keyup.enter)="loadBookings()"
+        placeholder="Guest name or email... (Press Enter)"
+      />
+    </div>
+  </div>
+  <div class="filter-actions">
+    <button class="btn btn-primary" (click)="loadBookings()">Search</button>
+    <button class="btn btn-light" (click)="filterToday()" title="Show reservations for today">Today</button>
+    <button class="btn btn-light" (click)="clearFilters()">Clear</button>
+  </div>
+</div>
+
+<!-- Add / Edit Booking Form Card -->
+<div class="card form-card fade-in" *ngIf="showForm">
+  <div class="form-header">
+    <div class="form-title-badge">📅</div>
+    <div>
+      <h3>{{ editingId === null ? 'Create Reservation' : 'Edit Reservation #' + editingId }}</h3>
+      <p class="form-subtitle">Enter guest details, select dining table and confirm party timing</p>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate class="grid-form">
+    <div>
+      <label>Assigned Table</label>
+      <select formControlName="table_id">
+        <option [ngValue]="null">Select available table</option>
+        <option *ngFor="let t of tables" [ngValue]="t.id">
+          Table #{{ t.table_number }} (Seats {{ t.capacity }} • {{ t.location | titlecase }})
+        </option>
+      </select>
+      <div class="field-error" *ngIf="form.controls.table_id.touched && form.controls.table_id.errors">
+        <span>⚠️ Please select a table</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Guest Full Name</label>
+      <input type="text" formControlName="guest_name" placeholder="e.g. John Doe" />
+      <div class="field-error" *ngIf="form.controls.guest_name.touched && form.controls.guest_name.errors">
+        <span *ngIf="form.controls.guest_name.errors['required']">⚠️ Name is required</span>
+        <span *ngIf="form.controls.guest_name.errors['minlength']">⚠️ At least 2 characters</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Email Address</label>
+      <input type="email" formControlName="guest_email" placeholder="e.g. guest@example.com" />
+      <div class="field-error" *ngIf="form.controls.guest_email.touched && form.controls.guest_email.errors">
+        <span *ngIf="form.controls.guest_email.errors['required']">⚠️ Email is required</span>
+        <span *ngIf="form.controls.guest_email.errors['email']">⚠️ Enter a valid email address</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Contact Phone (10 digits)</label>
+      <input type="text" formControlName="guest_phone" maxlength="10" placeholder="e.g. 9876543210" />
+      <div class="field-error" *ngIf="form.controls.guest_phone.touched && form.controls.guest_phone.errors">
+        <span *ngIf="form.controls.guest_phone.errors['required']">⚠️ Phone is required</span>
+        <span *ngIf="form.controls.guest_phone.errors['pattern']">⚠️ Phone must be exactly 10 digits</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Party Size (Guests)</label>
+      <input type="number" formControlName="party_size" placeholder="e.g. 2" />
+      <div class="field-error" *ngIf="form.controls.party_size.touched && form.controls.party_size.errors">
+        <span *ngIf="form.controls.party_size.errors['required']">⚠️ Party size is required</span>
+        <span *ngIf="form.controls.party_size.errors['min']">⚠️ At least 1 guest</span>
+        <span *ngIf="form.controls.party_size.errors['max']">⚠️ Maximum 20 guests</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Booking Date</label>
+      <input type="date" formControlName="booking_date" />
+      <div class="field-error" *ngIf="form.controls.booking_date.touched && form.controls.booking_date.errors">
+        <span *ngIf="form.controls.booking_date.errors['required']">⚠️ Date is required</span>
+        <span *ngIf="form.controls.booking_date.errors['pastDate']">⚠️ Date cannot be in the past</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Arrival Time</label>
+      <input type="time" formControlName="booking_time" />
+      <div class="field-error" *ngIf="form.controls.booking_time.touched && form.controls.booking_time.errors">
+        <span>⚠️ Time is required</span>
+      </div>
+    </div>
+
+    <div>
+      <label>Reservation Status</label>
+      <select formControlName="status">
+        <option value="confirmed">● Confirmed</option>
+        <option value="completed">● Completed</option>
+        <option value="cancelled">● Cancelled</option>
+      </select>
+    </div>
+
+    <div class="full-width">
+      <label>Special Requests & Dietary Notes</label>
+      <input type="text" formControlName="notes" placeholder="e.g. Window booth preferred, vegetarian anniversary dinner" />
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">
+        {{ editingId === null ? 'Confirm Reservation' : 'Save Changes' }}
+      </button>
+      <button class="btn btn-light" type="button" (click)="cancelForm()">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<!-- Bookings List Card -->
+<div class="card">
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading guest reservations...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && bookings.length === 0">
+    <div class="empty-icon">📅</div>
+    <h3>No Reservations Found</h3>
+    <p>There are no bookings matching your current filter criteria.</p>
+  </div>
+
+  <table *ngIf="bookings.length > 0">
+    <thead>
+      <tr>
+        <th>Date & Time</th>
+        <th>Table</th>
+        <th>Guest</th>
+        <th>Contact Info</th>
+        <th>Party</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let b of bookings">
+        <td>
+          <div class="datetime-cell">
+            <span class="date-badge">📅 {{ b.booking_date }}</span>
+            <span class="time-badge">⏰ {{ b.booking_time }}</span>
+          </div>
+        </td>
+        <td>
+          <div class="table-chip">
+            <span>🍽️ Table #{{ b.table_number }}</span>
+          </div>
+        </td>
+        <td>
+          <div class="guest-cell">
+            <div class="avatar-circle">{{ getInitials(b.guest_name) }}</div>
+            <div>
+              <div class="guest-name">{{ b.guest_name }}</div>
+              <div class="guest-notes" *ngIf="b.notes">💬 {{ b.notes }}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="contact-cell">
+            <div class="contact-email">✉️ {{ b.guest_email }}</div>
+            <div class="contact-phone">📞 {{ b.guest_phone }}</div>
+          </div>
+        </td>
+        <td>
+          <div class="capacity-pill">
+            <span>👥</span>
+            <span>{{ b.party_size }} {{ b.party_size === 1 ? 'Guest' : 'Guests' }}</span>
+          </div>
+        </td>
+        <td>
+          <span
+            class="badge"
+            [class.badge-warn]="b.status === 'cancelled'"
+            [class.badge-grey]="b.status === 'completed'"
+          >
+            {{ b.status | titlecase }}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-small" (click)="openEdit(b)" title="Edit Reservation">Edit</button>
+          <button class="btn btn-small btn-danger" (click)="remove(b)" title="Cancel / Delete">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

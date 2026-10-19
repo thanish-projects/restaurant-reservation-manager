@@ -1,0 +1,48 @@
+<header class="navbar" *ngIf="auth.isLoggedIn()">
+  <div class="brand">
+    <div class="brand-icon">🍽️</div>
+    <div class="brand-text">
+      <span class="brand-title">GUSTO RESERVE</span>
+      <span class="brand-subtitle">Table & Booking Manager</span>
+    </div>
+  </div>
+
+  <nav class="nav-links">
+    <a routerLink="/bookings" routerLinkActive="active">
+      <span class="nav-icon">📅</span>
+      <span>Bookings</span>
+    </a>
+    <a routerLink="/tables" routerLinkActive="active">
+      <span class="nav-icon">🪑</span>
+      <span>Tables</span>
+    </a>
+    <a href="http://localhost:3000/api-docs" target="_blank" rel="noopener noreferrer" title="Open Swagger API Explorer">
+      <span class="nav-icon">⚡</span>
+      <span>API Docs</span>
+    </a>
+  </nav>
+
+  <div class="user-profile">
+    <div class="status-indicator">
+      <span class="pulse-dot"></span>
+      <span class="status-text">Online</span>
+    </div>
+    <div class="user-chip">
+      <div class="user-avatar">{{ (auth.getUsername() || 'A').substring(0, 1).toUpperCase() }}</div>
+      <div class="user-meta">
+        <span class="username">{{ auth.getUsername() }}</span>
+        <span class="user-role">Administrator</span>
+      </div>
+    </div>
+    <button class="btn btn-logout" (click)="onLogout()" title="Sign Out">
+      <span>Logout</span>
+      <span class="logout-icon">↪</span>
+    </button>
+  </div>
+</header>
+
+<main class="container">
+  <router-outlet></router-outlet>
+</main>
+
+<app-toast></app-toast>
