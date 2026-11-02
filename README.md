@@ -15,6 +15,7 @@ DB_USER=root
 DB_PASSWORD=root123
 DB_NAME=reservation_db
 ```
+When both forms are set, the individual `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` values take precedence over `DATABASE_URL`.
 
 ### 2. Backend
 ```

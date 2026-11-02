@@ -1,0 +1,103 @@
+<!-- AI Chat Widget — Multi-Agent Orchestration powered by FreeLLMAPI -->
+
+<!-- Floating Toggle Button -->
+<button
+  class="chat-toggle-btn"
+  (click)="toggleChat()"
+  [attr.aria-label]="isOpen ? 'Close AI Assistant' : 'Open AI Assistant'"
+  title="AI Restaurant Assistant"
+>
+  <span class="chat-icon" *ngIf="!isOpen">🤖</span>
+  <span class="chat-icon" *ngIf="isOpen">✕</span>
+  <span class="chat-badge" *ngIf="!isOpen">AI</span>
+</button>
+
+<!-- Chat Drawer -->
+<div class="chat-drawer" [class.open]="isOpen">
+
+  <!-- Header -->
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <span class="chat-header-icon">🤖</span>
+      <div>
+        <div class="chat-header-title">Restaurant AI Assistant</div>
+        <div class="chat-header-subtitle">Multi-Agent · FreeLLMAPI</div>
+      </div>
+    </div>
+    <div class="chat-header-actions">
+      <button class="chat-clear-btn" (click)="clearChat()" title="Clear conversation">🗑️</button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="chat-messages" #messagesContainer>
+    <div
+      *ngFor="let msg of messages"
+      class="chat-message"
+      [class.user-message]="msg.role === 'user'"
+      [class.assistant-message]="msg.role === 'assistant'"
+    >
+      <!-- Assistant Avatar -->
+      <div class="message-avatar" *ngIf="msg.role === 'assistant'">🤖</div>
+
+      <!-- Message Bubble -->
+      <div class="message-content">
+        <div class="message-bubble" [innerHTML]="msg.content | lineBreaks">
+        </div>
+
+        <!-- Agent metadata (assistant only) -->
+        <div class="message-meta" *ngIf="msg.role === 'assistant' && msg.agent">
+          <span class="agent-badge">{{ getAgentLabel(msg.agent) }}</span>
+          <span class="intent-badge" *ngIf="msg.intent">{{ getIntentLabel(msg.intent) }}</span>
+          <span class="model-badge" *ngIf="msg.model">{{ msg.model }}</span>
+        </div>
+      </div>
+
+      <!-- User Avatar -->
+      <div class="message-avatar user-avatar" *ngIf="msg.role === 'user'">👤</div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="chat-message assistant-message" *ngIf="isLoading">
+      <div class="message-avatar">🤖</div>
+      <div class="message-content">
+        <div class="message-bubble loading-bubble">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        <div class="message-meta">
+          <span class="agent-badge">🔄 Orchestrating agents...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div class="chat-error" *ngIf="errorMessage">
+    ⚠️ {{ errorMessage }}
+  </div>
+
+  <!-- Input Area -->
+  <div class="chat-input-area">
+    <textarea
+      class="chat-input"
+      [(ngModel)]="userInput"
+      (keydown)="onKeyDown($event)"
+      placeholder="Ask about bookings, tables, availability..."
+      rows="2"
+      [disabled]="isLoading"
+    ></textarea>
+    <button
+      class="chat-send-btn"
+      (click)="sendMessage()"
+      [disabled]="isLoading || !userInput.trim()"
+      title="Send message"
+    >
+      {{ isLoading ? '⏳' : '➤' }}
+    </button>
+  </div>
+
+  <!-- Footer hint -->
+  <div class="chat-footer">
+    Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line
+  </div>
+</div>

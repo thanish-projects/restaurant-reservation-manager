@@ -3,7 +3,7 @@
     <div class="brand-icon">🍽️</div>
     <div class="brand-text">
       <span class="brand-title">GUSTO RESERVE</span>
-      <span class="brand-subtitle">Table & Booking Manager</span>
+      <span class="brand-subtitle">Table &amp; Booking Manager</span>
     </div>
   </div>
 
@@ -46,3 +46,6 @@
 </main>
 
 <app-toast></app-toast>
+
+<!-- AI Multi-Agent Chat Widget (visible when logged in) -->
+<app-ai-chat *ngIf="auth.isLoggedIn()"></app-ai-chat>

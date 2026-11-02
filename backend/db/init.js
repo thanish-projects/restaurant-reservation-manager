@@ -1,21 +1,13 @@
 // Run with: npm run db:init
 // Creates tables and a default admin user (admin / admin123) plus sample tables.
-require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const mysql = require('mysql2/promise');
+const { getMysqlConfig } = require('../src/config/mysqlConfig');
 
 async function main() {
-  const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'root123',
-    multipleStatements: true,
-  };
-
-  const dbName = process.env.DB_NAME || 'reservation_db';
+  const { database: dbName, ...dbConfig } = getMysqlConfig();
 
   // 1. Ensure the database exists
   const tempConn = await mysql.createConnection(dbConfig);

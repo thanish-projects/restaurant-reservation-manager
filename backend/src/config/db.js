@@ -1,32 +1,13 @@
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+const { getMysqlConfig } = require('./mysqlConfig');
 
-let poolConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'root123',
-  database: process.env.DB_NAME || 'reservation_db',
+const poolConfig = {
+  ...getMysqlConfig(),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   dateStrings: true,
 };
-
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('mysql')) {
-  try {
-    const url = new URL(process.env.DATABASE_URL);
-    poolConfig.host = url.hostname || poolConfig.host;
-    poolConfig.port = Number(url.port) || poolConfig.port;
-    poolConfig.user = url.username ? decodeURIComponent(url.username) : poolConfig.user;
-    poolConfig.password = url.password ? decodeURIComponent(url.password) : poolConfig.password;
-    if (url.pathname && url.pathname.length > 1) {
-      poolConfig.database = url.pathname.slice(1);
-    }
-  } catch (e) {
-    // URL parse fallback
-  }
-}
 
 const pool = mysql.createPool(poolConfig);
 
